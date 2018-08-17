@@ -25,7 +25,8 @@ $(VENV)/bin/activate:
 	mkdir -p $(VENV)
 	virtualenv-3 $(VENV)                 \
 		&& source $(VENV)/bin/activate   \
-		&& pip install --no-cache-dir --no-index --find-links $(WHEELS) -U setuptools pip
+		&& pip install --no-cache-dir --no-index --find-links $(WHEELS) -U setuptools pip \
+		&& pip install --upgrade pip==10.0
 	virtualenv-3 --relocatable $(VENV)
 
 wheels: venv
@@ -36,7 +37,7 @@ wheels: venv
 		&& $(TREADMILL_DIR)/scripts/setup_wheel_cache.sh -w $(WHEELS)
 
 wheels_cache:
-	aws s3 sync $(S3_WHEELS_CACHE) $(WHEELS)
+	aws s3 sync $(S3_WHEELS_CACHE) $(WHEELS) --exclude "*numpy*" --exclude "*pandas*"
 
 sbin: \
 	$(VENV)/sbin/opts.sh \
@@ -69,7 +70,7 @@ install: venv sbin
 		$(RPMDIR)/BUILD/opt/treadmill/bin/activate*
 	cp service/*.service $(RPMDIR)/BUILD
 
-rpm: clean wheels_cache install
+rpm: clean wheels_cache wheels install
 	mkdir -p $(RPMDIR)/SOURCES
 	mkdir -p $(RPMDIR)/SRPMS
 	mkdir -p $(RPMDIR)/RPMS
